@@ -1,6 +1,7 @@
-EMPTY = ' '
+PLAYER = "X"
+AI = "O"
+EMPTY = ""
 
-# Initialize a 3x3 board
 def create_board():
     return [[EMPTY for _ in range(3)] for _ in range(3)]
 
@@ -14,17 +15,23 @@ def undo_move(board, row, col):
     board[row][col] = EMPTY
 
 def check_winner(board):
-    lines = []
+    # Check rows and columns
     for i in range(3):
-        lines.append(board[i])
-        lines.append([board[0][i], board[1][i], board[2][i]])
-    lines.append([board[0][0], board[1][1], board[2][2]])
-    lines.append([board[0][2], board[1][1], board[2][0]])
-    for line in lines:
-        if line.count(line[0]) == 3 and line[0] != EMPTY:
-            return line[0]
-        
+        if board[i][0] == board[i][1] == board[i][2] != EMPTY:
+            return board[i][0]
+        if board[0][i] == board[1][i] == board[2][i] != EMPTY:
+            return board[0][i]
+    
+    # Check diagonals
+    if board[0][0] == board[1][1] == board[2][2] != EMPTY:
+        return board[0][0]
+    if board[0][2] == board[1][1] == board[2][0] != EMPTY:
+        return board[0][2]
+
     return None
 
 def is_draw(board):
-    return all(cell != EMPTY for row in board for cell in row)
+    for row in board:
+        if EMPTY in row:
+            return False
+    return check_winner(board) is None

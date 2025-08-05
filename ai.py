@@ -1,16 +1,13 @@
 import random
-from game_logic import make_move, undo_move, check_winner, is_draw
 
-AI = 'O'
-PLAYER = 'X'
-EMPTY = ' '
+from game_logic import PLAYER, AI, EMPTY, check_winner, is_draw, make_move, undo_move
 
 def minimax(board, depth, is_maximizing, alpha, beta):
     winner = check_winner(board)
     if winner == AI:
-        return 10 - depth
+        return 1
     elif winner == PLAYER:
-        return depth - 10
+        return -1
     elif is_draw(board):
         return 0
 
@@ -19,9 +16,9 @@ def minimax(board, depth, is_maximizing, alpha, beta):
         for i in range(3):
             for j in range(3):
                 if board[i][j] == EMPTY:
-                    make_move(board, i, j, AI)
-                    eval = minimax(board, depth + 1, False, alpha, beta)
-                    undo_move(board, i, j)
+                    board[i][j] = AI
+                    eval = minimax(board, depth - 1, False, alpha, beta)
+                    board[i][j] = EMPTY
                     max_eval = max(max_eval, eval)
                     alpha = max(alpha, eval)
                     if beta <= alpha:
@@ -32,9 +29,9 @@ def minimax(board, depth, is_maximizing, alpha, beta):
         for i in range(3):
             for j in range(3):
                 if board[i][j] == EMPTY:
-                    make_move(board, i, j, PLAYER)
-                    eval = minimax(board, depth + 1, True, alpha, beta)
-                    undo_move(board, i, j)
+                    board[i][j] = PLAYER
+                    eval = minimax(board, depth - 1, True, alpha, beta)
+                    board[i][j] = EMPTY
                     min_eval = min(min_eval, eval)
                     beta = min(beta, eval)
                     if beta <= alpha:
@@ -42,25 +39,14 @@ def minimax(board, depth, is_maximizing, alpha, beta):
         return min_eval
 
 def best_move(board, difficulty):
-    if difficulty == 'Easy':
-        available = [(i, j) for i in range(3) for j in range(3) if board[i][j] == EMPTY]
-        return random.choice(available)
-    elif difficulty == 'Medium':
-        depth_limit = 1
-        return limited_minimax_move(board, depth_limit)
-    else:
-        best_score = -float('inf')
-        move = None
-        for i in range(3):
-            for j in range(3):
-                if board[i][j] == EMPTY:
-                    make_move(board, i, j, AI)
-                    score = minimax(board, 0, False, -float('inf'), float('inf'))
-                    undo_move(board, i, j)
-                    if score > best_score:
-                        best_score = score
-                        move = (i, j)
-        return move
+    if difficulty == "easy":
+        return limited_minimax_move(board, depth_limit=1)
+    elif difficulty == "medium":
+        return limited_minimax_move(board, depth_limit=3)
+    elif difficulty == "hard":
+        return limited_minimax_move(board, depth_limit=9)  # full depth = perfect AI
+
+
 
 def limited_minimax_move(board, depth_limit):
     best_score = -float('inf')

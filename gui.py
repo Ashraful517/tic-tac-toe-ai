@@ -1,101 +1,151 @@
 import tkinter as tk
-from game_logic import create_board, is_valid_move, make_move, undo_move, check_winner, is_draw
+from tkinter import messagebox
 from ai import best_move
+from game_logic import *
 
-class TicTacToeGame:
-    def __init__(self, root):
-        self.root = root
-        self.root.title("Tic Tac Toe AI")
-        self.board = create_board()
-        self.difficulty = 'Hard'
+class GameGUI:
+    def __init__(self):
+        self.window = tk.Tk()
+        self.window.title("Tic Tac Toe AI")
+        self.window.resizable(False, False)
+
         self.buttons = [[None for _ in range(3)] for _ in range(3)]
-        self.status_label = tk.Label(root, text="Your Turn (X)", font=('Arial', 14))
-        self.status_label.grid(row=0, column=0, columnspan=3)
-        self.create_buttons()
-        self.create_menu()
+        self.board = [[EMPTY for _ in range(3)] for _ in range(3)]
+        self.current_player = PLAYER
+        self.difficulty = "hard"
+        self.mode = "ai"  # "ai" or "pvp"
 
-    def create_buttons(self):
-        for i in range(3):
-              for j in range(3):
-                button = tk.Button(self.root, text='', font=('Arial', 32), width=4, height=1,
-                                   bg='white', activebackground='lightgray',
-                                   command=lambda i=i, j=j: self.click_cell(i, j))
-                button.grid(row=i + 1, column=j)
-                button.bind('<Enter>', lambda e, x=i, y=j: self.on_hover(x, y))
-                button.bind('<Leave>', lambda e, x=i, y=j: self.on_leave(x, y))
-                self.buttons[i][j] = button
-    
-    def on_hover(self, i, j):
-        if self.board[i][j] == ' ':
-            self.buttons[i][j].config(bg='lightblue')
+        self.create_mode_buttons()
+        self.create_difficulty_buttons()
+        self.create_restart_button()
+        self.create_board()
+        self.window.mainloop()
 
-    def on_leave(self, i, j):
-        if self.board[i][j] == ' ':
-            self.buttons[i][j].config(bg='white')
+    def create_mode_buttons(self):
+        frame = tk.Frame(self.window)
+        frame.pack(pady=10)
 
-    def create_menu(self):
-        menubar = tk.Menu(self.root)
-        self.root.config(menu=menubar)
-        difficulty_menu = tk.Menu(menubar, tearoff=0)
-        menubar.add_cascade(label="Difficulty", menu=difficulty_menu)
-        for level in ['Easy', 'Medium', 'Hard']:
-            difficulty_menu.add_command(label=level, command=lambda l=level: self.set_difficulty(l))
-        menubar.add_command(label="Restart", command=self.restart_game)
+        self.mode_label = tk.Label(frame, text="Mode: Human vs AI")
+        self.mode_label.pack(side=tk.LEFT, padx=5)
+
+        self.toggle_mode_btn = tk.Button(frame, text="Switch to Human vs Human", command=self.toggle_mode)
+        self.toggle_mode_btn.pack(side=tk.LEFT, padx=5)
+
+    def toggle_mode(self):
+        if self.mode == "ai":
+            self.mode = "pvp"
+            self.mode_label.config(text="Mode: Human vs Human")
+            self.toggle_mode_btn.config(text="Switch to Human vs AI")
+        else:
+            self.mode = "ai"
+            self.mode_label.config(text="Mode: Human vs AI")
+            self.toggle_mode_btn.config(text="Switch to Human vs Human")
+        self.restart_game()
+
+    def create_difficulty_buttons(self):
+        frame = tk.Frame(self.window)
+        frame.pack(pady=5)
+        for level in ["easy", "medium", "hard"]:
+            btn = tk.Button(frame, text=level.capitalize(), command=lambda l=level: self.set_difficulty(l))
+            btn.pack(side=tk.LEFT, padx=5)
 
     def set_difficulty(self, level):
         self.difficulty = level
-        self.status_label.config(text=f"Difficulty set to {level}")
+        self.restart_game()
 
-    def click_cell(self, i, j):
-        if not is_valid_move(self.board, i, j):
+    def create_restart_button(self):
+        self.restart_button = tk.Button(self.window, text="Restart", command=self.restart_game)
+        self.restart_button.pack(pady=5)
+
+    def create_board(self):
+        frame = tk.Frame(self.window)
+        frame.pack()
+        for i in range(3):
+            for j in range(3):
+                btn = tk.Button(frame, text="", width=10, height=4,
+                                font=("Helvetica", 24), bg="white",
+                                command=lambda row=i, col=j: self.player_move(row, col))
+                btn.grid(row=i, column=j)
+                btn.bind("<Enter>", lambda e, r=i, c=j: self.on_hover(r, c))
+                btn.bind("<Leave>", lambda e, r=i, c=j: self.on_leave(r, c))
+                self.buttons[i][j] = btn
+
+    def player_move(self, row, col):
+        if self.board[row][col] != EMPTY:
             return
-        make_move(self.board, i, j, 'X')
-        self.update_buttons()
+
+        if self.mode == "ai":
+            if self.current_player != PLAYER:
+                return  # prevent double-click during AI turn
+
+            self.board[row][col] = PLAYER
+            self.buttons[row][col].config(text=PLAYER, bg="lightgreen")
+
+            winner = check_winner(self.board)
+            if winner:
+                self.show_result(f"{winner} wins!")
+                return
+            elif is_draw(self.board):
+                self.show_result("It's a draw!")
+                return
+
+            self.current_player = AI
+            self.window.after(300, self.ai_move)
+            return
+
+        # PvP mode
+        self.board[row][col] = self.current_player
+        color = "lightgreen" if self.current_player == PLAYER else "lightcoral"
+        self.buttons[row][col].config(text=self.current_player, bg=color)
+
         winner = check_winner(self.board)
         if winner:
-            self.end_game(f"{winner} wins!")
+            self.show_result(f"{winner} wins!")
             return
         elif is_draw(self.board):
-            self.end_game("It's a draw!")
+            self.show_result("It's a draw!")
             return
 
+        self.current_player = PLAYER if self.current_player == AI else AI
 
-        self.status_label.config(text = "AI's Turn(0)")
-        self.root.after(500, self.ai_move)
-        
+
+
+
     def ai_move(self):
         move = best_move(self.board, self.difficulty)
         if move:
-            make_move(self.board, move[0], move[1], 'O')
-            self.update_buttons()
-        winner = check_winner(self.board)
-        if winner:
-            self.end_game(f"{winner} wins!")
-        elif is_draw(self.board):
-            self.end_game("It's a draw!")
-        else:
-            self.status_label.config(text="Your Turn (X)")
-        
-    def update_buttons(self):
+            row, col = move
+            self.board[row][col] = AI
+            self.buttons[row][col].config(text=AI, bg="lightcoral")
+
+            winner = check_winner(self.board)
+            if winner:
+                self.show_result(f"{winner} wins!")
+                return
+            elif is_draw(self.board):
+                self.show_result("It's a draw!")
+                return
+
+        self.current_player = PLAYER
+
+
+
+
+    def restart_game(self):
+        self.board = [[EMPTY for _ in range(3)] for _ in range(3)]
+        self.current_player = PLAYER
         for i in range(3):
             for j in range(3):
-                cell = self.board[i][j]
-                btn = self.buttons[i][j]
-                btn.config(text=cell)
-                if cell == 'X':
-                    btn.config(bg='lightgreen', disabledforeground='black')
-                elif cell == 'O':
-                    btn.config(bg='lightcoral', disabledforeground='black')
-                
-    def end_game(self, message):
-        self.status_label.config(text=message)
-        for row in self.buttons:
-            for button in row:
-                button.config(state = 'disabled')
-        
-    def restart_game(self):
-        self.board = create_board()
-        for row in self.buttons:
-            for button in row:
-                button.config(text ='',state = 'normal',bg='white')
-        self.status_label.config(text = "Your Turn (X)")
+                self.buttons[i][j].config(text="", bg="white")
+
+    def on_hover(self, row, col):
+        if self.board[row][col] == EMPTY:
+            self.buttons[row][col].config(bg="lightblue")
+
+    def on_leave(self, row, col):
+        if self.board[row][col] == EMPTY:
+            self.buttons[row][col].config(bg="white")
+
+    def show_result(self, message):
+        messagebox.showinfo("Game Over", message)
+        self.restart_game()
