@@ -5,11 +5,11 @@ EMPTY = ""
 def create_board():
     return [[EMPTY for _ in range(3)] for _ in range(3)]
 
-def is_valid_move(board, row, col):
-    return board[row][col] == EMPTY
-
 def make_move(board, row, col, player):
-    board[row][col] = player
+    if board[row][col] == EMPTY:
+        board[row][col] = player
+        return True
+    return False
 
 def undo_move(board, row, col):
     board[row][col] = EMPTY
@@ -35,3 +35,4 @@ def is_draw(board):
         if EMPTY in row:
             return False
     return check_winner(board) is None
+
