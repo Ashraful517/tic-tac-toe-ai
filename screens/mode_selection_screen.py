@@ -1,45 +1,21 @@
 import tkinter as tk
+from tkinter import ttk
 
 class ModeSelectionScreen(tk.Frame):
-    def __init__(self, master, on_mode_selected):
-        super().__init__(master)
-        self.configure(bg="#E3F2FD")  # 💡 Vibrant light blue
+    def __init__(self, master, on_back, on_next):
+        super().__init__(master, bg="#E3F2FD")  # Light blue
+        self.on_back = on_back
+        self.on_next = on_next
 
-        self.on_mode_selected = on_mode_selected
+        tk.Label(self, text="Select Game Mode", font=("Helvetica", 16, "bold"), bg="#E3F2FD", fg="#0D47A1").pack(pady=20)
+
         self.mode_var = tk.StringVar(value="AI")
-        self.difficulty_var = tk.StringVar(value="Easy")
+        mode_dropdown = ttk.Combobox(self, textvariable=self.mode_var, values=["AI", "HUMAN"], state="readonly", font=("Helvetica", 12))
+        mode_dropdown.pack(pady=10)
 
-        title = tk.Label(self, text="Select Game Mode", font=("Helvetica", 16, "bold"),
-                         bg="#E3F2FD", fg="#0D47A1")
-        title.pack(pady=10)
+        # Navigation buttons
+        btn_frame = tk.Frame(self, bg="#E3F2FD")
+        btn_frame.pack(pady=30)
 
-        # Mode selection
-        tk.Radiobutton(self, text="Human vs AI", variable=self.mode_var, value="AI",
-                       command=self.toggle_difficulty, bg="#E3F2FD").pack()
-        tk.Radiobutton(self, text="Human vs Human", variable=self.mode_var, value="HUMAN",
-                       command=self.toggle_difficulty, bg="#E3F2FD").pack()
-
-        # Difficulty options
-        self.difficulty_frame = tk.Frame(self, bg="#E3F2FD")
-        self.difficulty_frame.pack(pady=10)
-        tk.Label(self.difficulty_frame, text="Select Difficulty", bg="#E3F2FD", font=("Helvetica", 12)).pack()
-        tk.Radiobutton(self.difficulty_frame, text="Easy", variable=self.difficulty_var, value="Easy",
-                       bg="#E3F2FD").pack()
-        tk.Radiobutton(self.difficulty_frame, text="Medium", variable=self.difficulty_var, value="Medium",
-                       bg="#E3F2FD").pack()
-        tk.Radiobutton(self.difficulty_frame, text="Hard", variable=self.difficulty_var, value="Hard",
-                       bg="#E3F2FD").pack()
-
-        # Start button
-        tk.Button(self, text="Start Game", command=self.submit, font=("Helvetica", 12),
-                  bg="#1976D2", fg="white").pack(pady=20)
-
-    def toggle_difficulty(self):
-        if self.mode_var.get() == "AI":
-            self.difficulty_frame.pack(pady=10)
-        else:
-            self.difficulty_frame.forget()
-
-    def submit(self):
-        self.on_mode_selected(self.mode_var.get(), self.difficulty_var.get())
-
+        tk.Button(btn_frame, text="← Back", font=("Helvetica", 12), bg="#1976D2", fg="white", command=self.on_back).grid(row=0, column=0, padx=10)
+        tk.Button(btn_frame, text="Next →", font=("Helvetica", 12), bg="#1976D2", fg="white", command=lambda: self.on_next(self.mode_var.get())).grid(row=0, column=1, padx=10)
