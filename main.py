@@ -35,14 +35,18 @@ class App(tk.Tk):
 
     def go_to_difficulty(self, mode):
         self.mode = mode
-        self.switch_frame(DifficultyScreen, self.mode, self.show_mode_selection, self.show_game_screen)
+    # Pass mode, on_next callback (go_to_game), and on_back callback (show_mode_selection)
+        self.switch_frame(DifficultyScreen, self.mode, self.go_to_game, self.show_mode_selection)
+    
+    def go_to_game(self, mode, difficulty):
+        self.mode = mode
+        self.difficulty = difficulty
+        self.switch_frame(GameScreen, mode, difficulty, self.show_mode_selection)
 
-    def show_game_screen(self, difficulty=None):
-        if difficulty:
-            self.difficulty = difficulty
-        else:
-            self.difficulty = None  # Human vs Human mode
-        self.switch_frame(GameScreen, self.mode, self.difficulty, self.show_welcome_screen)
+
+
+    def show_game_screen(self, mode, difficulty):
+        self.switch_frame(GameScreen, mode, difficulty, self.show_mode_selection)
 
 if __name__ == "__main__":
     app = App()
